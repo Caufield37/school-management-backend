@@ -32,7 +32,7 @@ import java.sql.SQLException;
 public class StudentDao {
 
     public void insertStudent(Student student) {
-        String query = "INSERT INTO students ( first_name, last_name, gpa, age, grade) VALUES (?, ?, ?, ?, ?)";
+        String query = "INSERT INTO students ( first_name, last_name, gpa, age, grade, classroom_id) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement pstm = conn.prepareStatement(query)) {
@@ -42,6 +42,7 @@ public class StudentDao {
             pstm.setDouble(3, student.getGpa());
             pstm.setInt(4, student.getAge());
             pstm.setString(5, student.getGrade());
+            pstm.setInt(6, student.getClassroomId());
 
             pstm.executeUpdate();
             System.out.println("students have added to the database successfully.");
@@ -165,11 +166,11 @@ public class StudentUi {
         System.out.println("Process completed...");
     }
 
-    public void retriving() {
+    public void retrieving() {
 
         System.out.println("=== STUDENT RETRIEVAL SYSTEM ===");
         System.out.print("Enter Student.Student ID to search: ");
-        int searchId = scan.nextInt();
+        int searchId = Integer.parseInt(scan.nextLine().trim());
 
         System.out.println("\nUI: Requesting student data from the DAO layer...");
 
@@ -282,7 +283,7 @@ public class StudentUi {
 
             switch (choice) {
                 case 1 -> adding();
-                case 2 -> retriving();
+                case 2 -> retrieving();
                 case 3 -> updating();
                 case 4 -> deleting();
                 case 5 -> isRunning = false;
@@ -368,6 +369,8 @@ public class Student {
 
     public String getGrade() {return  this.grade;}
 
+    public Integer getClassroomId(){return this.classroomId;}
+
 }
 === src/Classroom/ClassroomDao.java ===
 package Classroom;
@@ -397,8 +400,8 @@ public class ClassroomDao {
                 classrooms.class_name,
                 teachers.name AS teacher_name
            From students
-           LEFT JOIN classrooms ON students.classroomId = classrooms.classroomId
-           LEFT JOIN teachers ON classrooms.teacherId = teachers.id
+           LEFT JOIN classrooms ON students.classroom_id = classrooms.classroom_id
+           LEFT JOIN teachers ON classrooms.teacher_id = teachers.id
            WHERE students.student_id = ?
             """;
 
@@ -505,8 +508,6 @@ public class ClassroomUi {
         System.out.println("Enter a student's id to view details: ");
         int studentId = Integer.parseInt(scanner.nextLine().trim());
 
-        classroomDao.getStudentDetails(studentId);
-
         StudentAcademicProfile profile = classroomDao.getStudentDetails(studentId);
 
         // 2. Guard against null if student doesn't exist
@@ -595,9 +596,9 @@ public class Classroom {
 
     public List<Student> getStudent() {return this.students;}
 
-    public String getClass_name() {return this.className;}
+    public String getClassName() {return this.className;}
 
-    public int getNumber_of_students(){return this.numberOfStudents;}
+    public int getNumberOfStudents(){return this.numberOfStudents;}
 }
 === src/Main.java ===
 import Student.StudentUi;
@@ -618,30 +619,36 @@ public class Main {
 
     public static void main_menu() {
         Scanner scanner = new Scanner(System.in);
-
         TeacherUi teacherUi = new TeacherUi();
         StudentUi studentUi = new StudentUi();
         ClassroomUi classroomUi = new ClassroomUi();
 
-        System.out.println("____________________________________________");
-        System.out.println("Welcome to Student Management Application");
-        System.out.println("____________________________________________");
+        boolean isRunning = true;
+        while (isRunning) {
+            System.out.println("\n____________________________________________");
+            System.out.println("Welcome to Student Management Application");
+            System.out.println("____________________________________________");
+            System.out.println("1. Student");
+            System.out.println("2. Teacher");
+            System.out.println("3. Classroom");
+            System.out.println("4. Quit");
+            System.out.print("Enter a number (1-4): ");
 
-        System.out.println("1. Student");
-        System.out.println("2. Teacher");
-        System.out.println("3. Classroom");
-        System.out.println("4. Quit");
+            int choice = 0;
+            try {
+                choice = Integer.parseInt(scanner.nextLine().trim());
+            } catch (NumberFormatException e) {
+                System.out.println("Please enter a valid number.");
+                continue;
+            }
 
-        System.out.print("Enter a number(1,2,3): ");
-        int choice = Integer.parseInt(scanner.nextLine().trim());
-
-
-        switch (choice) {
-            case 1 -> studentUi.displayingStudentUi();
-            case 2 -> teacherUi.displayingTeacherUi();
-            case 3 -> classroomUi.displayingClassroomUi();
-            case 4 -> {}
-            default -> System.out.println("Invalid number");
+            switch (choice) {
+                case 1 -> studentUi.displayingStudentUi();
+                case 2 -> teacherUi.displayingTeacherUi();
+                case 3 -> classroomUi.displayingClassroomUi();
+                case 4 -> isRunning = false;
+                default -> System.out.println("Invalid number");
+            }
         }
 
         scanner.close();
@@ -1034,7 +1041,7 @@ public class Teacher {
         this.subject = subject;
     }
 
-    public void setTeacherID(int teacherID) {this.teacherId = teacherId;}
+    public void setTeacherID(int teacherID) {this.teacherId = teacherID;}
 
     public void setFirstName(String first_name) {this.firstName = firstName;}
 
