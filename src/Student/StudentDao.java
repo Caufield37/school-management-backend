@@ -1,0 +1,101 @@
+package Student;
+import Database.DatabaseConfig;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+public class StudentDao {
+
+    public void insertStudent(Student student) {
+        String query = "INSERT INTO students ( first_name, last_name, gpa, age, grade) VALUES (?, ?, ?, ?, ?)";
+
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement pstm = conn.prepareStatement(query)) {
+
+            pstm.setString(1, student.getFirst_name());
+            pstm.setString(2, student.getLast_name());
+            pstm.setDouble(3, student.getGpa());
+            pstm.setInt(4, student.getAge());
+            pstm.setString(5, student.getGrade());
+
+            pstm.executeUpdate();
+            System.out.println("students have added to the database successfully.");
+
+        } catch (SQLException e) {
+            System.out.println("Database insert error" + e.getMessage());
+        }
+    }
+
+
+    public Student getStudentById(int studentId) {
+        String query = "SELECT * FROM students WHERE student_id = ?";
+
+        try(Connection conn = DatabaseConfig.getConnection();
+            PreparedStatement pstm = conn.prepareStatement(query)){
+
+            pstm.setInt(1, studentId);
+
+            try(ResultSet rs = pstm.executeQuery()) {
+                if(rs.next()) {
+                    String fName = rs.getString("first_name");
+                    String lName = rs.getString("last_name");
+                    double gpa = rs.getDouble("gpa");
+                    int age = rs.getInt("age");
+                    String grade = rs.getString("grade");
+                    Integer classroom_id = rs.getInt("classroom_id");
+
+                    return new Student(fName, lName, gpa, age, grade, classroom_id);
+                }
+
+                return null;
+            }
+
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+
+        return null;
+    }
+
+    public void updateStudentById(Student student, int studentId) {
+
+        String query = "UPDATE students SET first_name = ?, last_name = ?, gpa = ?, age = ?, grade = ? WHERE student_id = ?";
+
+        try(Connection conn = DatabaseConfig.getConnection();
+            PreparedStatement pstm = conn.prepareStatement(query)) {
+
+            pstm.setString(1, student.getFirst_name());
+            pstm.setString(2, student.getLast_name());
+            pstm.setDouble(3, student.getGpa());
+            pstm.setInt(4, student.getAge());
+            pstm.setString(5, student.getGrade());
+            pstm.setInt(6, studentId);
+
+            pstm.executeUpdate();
+            System.out.println("Done updating successfully...");
+
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+
+
+    }
+
+    public void deleteStudentById(int studentId) {
+        String query = "DELETE FROM students WHERE student_id = ?";
+
+        try(Connection conn = DatabaseConfig.getConnection();
+            PreparedStatement pstm = conn.prepareStatement(query)) {
+
+            pstm.setInt(1, studentId);
+            pstm.executeUpdate();
+        } catch(SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+}
+
