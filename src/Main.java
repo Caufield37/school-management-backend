@@ -31,7 +31,12 @@ public class Main {
         System.out.println("4. Quit");
 
         System.out.print("Enter a number(1,2,3): ");
-        int choice = Integer.parseInt(scanner.nextLine().trim());
+        int choice = 0;
+        try{
+            choice = Integer.parseInt(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            System.out.println(e.getMessage());
+        }
 
 
         switch (choice) {

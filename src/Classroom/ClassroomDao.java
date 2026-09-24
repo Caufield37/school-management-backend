@@ -25,8 +25,8 @@ public class ClassroomDao {
                 classrooms.class_name,
                 teachers.name AS teacher_name
            From students
-           LEFT JOIN classrooms ON students.classroomId = classrooms.classroomId
-           LEFT JOIN teachers ON classrooms.teacherId = teachers.id
+           LEFT JOIN classrooms ON students.classroom_id = classrooms.classroom_id
+           LEFT JOIN teachers ON classrooms.teacher_id = teachers.id
            WHERE students.student_id = ?
             """;
 

@@ -14,8 +14,6 @@ public class ClassroomUi {
         System.out.println("Enter a student's id to view details: ");
         int studentId = Integer.parseInt(scanner.nextLine().trim());
 
-        classroomDao.getStudentDetails(studentId);
-
         StudentAcademicProfile profile = classroomDao.getStudentDetails(studentId);
 
         // 2. Guard against null if student doesn't exist

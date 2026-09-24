@@ -16,7 +16,7 @@ public class Teacher {
         this.subject = subject;
     }
 
-    public void setTeacherID(int teacherID) {this.teacherId = teacherId;}
+    public void setTeacherID(int teacherID) {this.teacherId = teacherID;}
 
     public void setFirstName(String first_name) {this.firstName = firstName;}
 

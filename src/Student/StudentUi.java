@@ -40,11 +40,11 @@ public class StudentUi {
         System.out.println("Process completed...");
     }
 
-    public void retriving() {
+    public void retrieving() {
 
         System.out.println("=== STUDENT RETRIEVAL SYSTEM ===");
         System.out.print("Enter Student.Student ID to search: ");
-        int searchId = scan.nextInt();
+        int searchId = Integer.parseInt(scan.nextLine().trim());
 
         System.out.println("\nUI: Requesting student data from the DAO layer...");
 
@@ -157,7 +157,7 @@ public class StudentUi {
 
             switch (choice) {
                 case 1 -> adding();
-                case 2 -> retriving();
+                case 2 -> retrieving();
                 case 3 -> updating();
                 case 4 -> deleting();
                 case 5 -> isRunning = false;

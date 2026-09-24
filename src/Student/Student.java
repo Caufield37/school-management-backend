@@ -47,4 +47,6 @@ public class Student {
 
     public String getGrade() {return  this.grade;}
 
+    public int getClassroomId(){return this.classroomId;}
+
 }

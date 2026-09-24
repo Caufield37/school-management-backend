@@ -9,7 +9,7 @@ import java.sql.SQLException;
 public class StudentDao {
 
     public void insertStudent(Student student) {
-        String query = "INSERT INTO students ( first_name, last_name, gpa, age, grade) VALUES (?, ?, ?, ?, ?)";
+        String query = "INSERT INTO students ( first_name, last_name, gpa, age, grade, classroom_id) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement pstm = conn.prepareStatement(query)) {
@@ -19,6 +19,7 @@ public class StudentDao {
             pstm.setDouble(3, student.getGpa());
             pstm.setInt(4, student.getAge());
             pstm.setString(5, student.getGrade());
+            pstm.setInt(6, student.getClassroomId());
 
             pstm.executeUpdate();
             System.out.println("students have added to the database successfully.");
