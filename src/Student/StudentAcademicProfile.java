@@ -1,23 +1,23 @@
 package Student;
 
 public class StudentAcademicProfile {
-    private String first_name;
-    private String last_name;
-    private String classroom_name;
-    private String teacher_name;
+    private String firstName;
+    private String lastName;
+    private String classroomName;
+    private String teacherName;
 
-    public StudentAcademicProfile(String first_name, String last_name, String classroom_name, String teacher_name) {
-        this.first_name = first_name;
-        this.last_name = last_name;
-        this.classroom_name = classroom_name;
-        this.teacher_name = teacher_name;
+    public StudentAcademicProfile(String firstName, String lastName, String classroomName, String teacherName) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.classroomName = classroomName;
+        this.teacherName = teacherName;
     }
 
-    public String getFirst_name() {return this.first_name;}
+    public String getFirstName() {return this.firstName;}
 
-    public String getLast_name() {return this.last_name;}
+    public String getLastName() {return this.lastName;}
 
-    public String getClassroom_name() {return this.classroom_name;}
+    public String getClassroomName() {return this.classroomName;}
 
-    public String getTeacher_name() {return this.classroom_name;}
+    public String getTeacherName() {return this.teacherName;}
 }

@@ -37,14 +37,14 @@ public class TeacherUi {
         System.out.println("Process completed...");
     }
 
-    public void teacherRetriving() {
+    public void teacherRetrieving() {
         System.out.print("Enter an id to get information about that specific teacher: ");
         int teacherId = Integer.parseInt(scan.nextLine());
 
         Teacher teacher = teacherDao.getTeacherById(teacherId);
 
         if(teacher != null) {
-            System.out.println("Teacher: " + teacher.getFirst_name() + " " + teacher.getLast_name());
+            System.out.println("Teacher: " + teacher.getFirstName() + " " + teacher.getLastName());
             System.out.println("Age: " + teacher.getAge());
             System.out.println("Subject: " + teacher.getSubject());
         } else{
@@ -56,7 +56,7 @@ public class TeacherUi {
         List<Teacher> teacherList = teacherDao.getAllTeachers();
 
         for(Teacher teacher : teacherList) {
-            System.out.println(teacher.getFirst_name() + " " + teacher.getLast_name());
+            System.out.println(teacher.getFirstName() + " " + teacher.getLastName());
             System.out.println("Age: " + teacher.getAge());
             System.out.println("Subject: " + teacher.getSubject());
         }
@@ -85,11 +85,11 @@ public class TeacherUi {
         switch (choice) {
             case 1 -> {
                 System.out.println("Enter the new first name:");
-                teacher.setFirst_name(scan.next());
+                teacher.setFirstName(scan.nextLine());
             }
             case 2 -> {
                 System.out.println("Enter the new last name: ");
-                teacher.setLast_name(scan.nextLine());
+                teacher.setLastName(scan.nextLine());
             }
             case 3 -> {
                 System.out.println("Enter the new age: ");
@@ -143,7 +143,7 @@ public class TeacherUi {
 
             switch (choice) {
                 case 1 -> adding();
-                case 2 -> teacherRetriving();
+                case 2 -> teacherRetrieving();
                 case 3 -> updating();
                 case 4 -> deleting();
                 case 5 -> gettingAllTeacher();

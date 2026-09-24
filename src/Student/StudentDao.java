@@ -14,8 +14,8 @@ public class StudentDao {
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement pstm = conn.prepareStatement(query)) {
 
-            pstm.setString(1, student.getFirst_name());
-            pstm.setString(2, student.getLast_name());
+            pstm.setString(1, student.getFirstName());
+            pstm.setString(2, student.getLastName());
             pstm.setDouble(3, student.getGpa());
             pstm.setInt(4, student.getAge());
             pstm.setString(5, student.getGrade());
@@ -39,14 +39,14 @@ public class StudentDao {
 
             try(ResultSet rs = pstm.executeQuery()) {
                 if(rs.next()) {
-                    String fName = rs.getString("first_name");
-                    String lName = rs.getString("last_name");
+                    String firstName = rs.getString("first_name");
+                    String lastName = rs.getString("last_name");
                     double gpa = rs.getDouble("gpa");
                     int age = rs.getInt("age");
                     String grade = rs.getString("grade");
-                    Integer classroom_id = rs.getInt("classroom_id");
+                    Integer classroomId = rs.getInt("classroom_id");
 
-                    return new Student(fName, lName, gpa, age, grade, classroom_id);
+                    return new Student(firstName, lastName, gpa, age, grade, classroomId);
                 }
 
                 return null;
@@ -67,8 +67,8 @@ public class StudentDao {
         try(Connection conn = DatabaseConfig.getConnection();
             PreparedStatement pstm = conn.prepareStatement(query)) {
 
-            pstm.setString(1, student.getFirst_name());
-            pstm.setString(2, student.getLast_name());
+            pstm.setString(1, student.getFirstName());
+            pstm.setString(2, student.getLastName());
             pstm.setDouble(3, student.getGpa());
             pstm.setInt(4, student.getAge());
             pstm.setString(5, student.getGrade());

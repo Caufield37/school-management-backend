@@ -17,7 +17,7 @@ public class TeacherDao {
 
         //even though in teacher object, it has first_name and last_name,
         //here i want to combine name by concaneting two strings
-        String name = teacher.getFirst_name() + " " +  teacher.getLast_name();
+        String name = teacher.getFirstName() + " " +  teacher.getLastName();
 
         //insert into teachers tabes,
         //the values are name, age and subject
@@ -179,9 +179,10 @@ public class TeacherDao {
         try(Connection conn = DatabaseConfig.getConnection();
             PreparedStatement pstm = conn.prepareStatement(query)) {
 
-            pstm.setString(1, teacher.getFirst_name() + " " + teacher.getLast_name());
+            pstm.setString(1, teacher.getFirstName() + " " + teacher.getLastName());
             pstm.setInt(2, teacher.getAge());
             pstm.setString(3, teacher.getSubject());
+            pstm.setInt(4, teacherId);
 
             pstm.executeUpdate();
             System.out.println("Done updating successfully...");

@@ -1,28 +1,28 @@
 package Student;
 
 public class Student {
-    private String first_name;
-    private String last_name;
+    private String firstName;
+    private String lastName;
     private double gpa;
     private int age;
     private String grade;
     private Integer classroomId;
 
-    public Student(String first_name, String last_name, double gpa, int age, String grade, Integer classroomId) {
-        this.first_name = first_name;
-        this.last_name = last_name;
+    public Student(String firstName, String lastName, double gpa, int age, String grade, Integer classroomId) {
+        this.firstName = firstName;
+        this.lastName = lastName;
         this.gpa = gpa;
         this.age = age;
         this.grade = grade;
         this.classroomId = classroomId;
     }
 
-    public void setFirst_name(String first_name) {
-        this.first_name = first_name;
+    public void setFirstName(String first_name) {
+        this.firstName = firstName;
     }
 
-    public void setLast_name(String last_name) {
-        this.last_name = last_name;
+    public void setLastName(String last_name) {
+        this.lastName = lastName;
     }
 
     public void setAge(int age) {
@@ -37,9 +37,9 @@ public class Student {
         this.grade = grade;
     }
 
-    public String getFirst_name() {return this.first_name;}
+    public String getFirstName() {return this.firstName;}
 
-    public String getLast_name() {return this.last_name;}
+    public String getLastName() {return this.lastName;}
 
     public double getGpa() {return this.gpa;}
 

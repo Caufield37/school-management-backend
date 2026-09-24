@@ -2,33 +2,33 @@ package Teacher;
 
 public class Teacher {
 
-    private String first_name;
-    private String last_name;
+    private String firstName;
+    private String lastName;
     private int age;
     private String subject;
-    private int teacherID;
+    private int teacherId;
 
 
-    public Teacher(String first_name, String last_name, int age, String subject) {
-        this.first_name = first_name;
-        this.last_name = last_name;
+    public Teacher(String firstName, String lastName, int age, String subject) {
+        this.firstName = firstName;
+        this.lastName = lastName;
         this.age = age;
         this.subject = subject;
     }
 
-    public void setTeacherID(int teacherID) {this.teacherID = teacherID;}
+    public void setTeacherID(int teacherID) {this.teacherId = teacherId;}
 
-    public void setFirst_name(String first_name) {this.first_name = first_name;}
+    public void setFirstName(String first_name) {this.firstName = firstName;}
 
-    public void setLast_name(String last_name) {this.last_name = last_name;}
+    public void setLastName(String last_name) {this.lastName = last_name;}
 
     public void setAge(int age) {this.age = age;}
 
     public void setSubject(String subject) {this.subject = subject;}
 
-    public String getFirst_name() {return this.first_name;}
+    public String getFirstName() {return this.firstName;}
 
-    public String getLast_name() {return this.last_name;}
+    public String getLastName() {return this.lastName;}
 
     public int getAge() {return this.age;}
 

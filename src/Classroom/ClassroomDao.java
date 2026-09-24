@@ -1,4 +1,4 @@
-package Class;
+package Classroom;
 
 import Database.DatabaseConfig;
 import Student.StudentAcademicProfile;
@@ -25,8 +25,8 @@ public class ClassroomDao {
                 classrooms.class_name,
                 teachers.name AS teacher_name
            From students
-           LEFT JOIN classrooms ON students.classroom_id = classrooms.classroom_id
-           LEFT JOIN teachers ON classrooms.teacher_id = teachers.id
+           LEFT JOIN classrooms ON students.classroomId = classrooms.classroomId
+           LEFT JOIN teachers ON classrooms.teacherId = teachers.id
            WHERE students.student_id = ?
             """;
 
@@ -42,19 +42,19 @@ public class ClassroomDao {
             // Check if a row exists matching the student ID and move the cursor to it.
             if(rs.next()) {
                 //the value under first_name column is stored in first_name variable
-                String first_name = rs.getString("first_name");
+                String firstName = rs.getString("first_name");
 
                 //the value under last_name column is stored in last_name variable
-                String last_name = rs.getString("last_name");
+                String lastName = rs.getString("last_name");
 
                 //the value under class_name column is stored in class_name variable
-                String class_name = rs.getString("class_name");
+                String className = rs.getString("class_name");
 
                 //the value under teacher_name column is stored in teacher_name variable
-                String teacher_name = rs.getString("teacher_name");
+                String teacherName = rs.getString("teacher_name");
 
                 //return all the value assigning to new object, studentAcademicProfile
-                return new StudentAcademicProfile(first_name, last_name, class_name, teacher_name);
+                return new StudentAcademicProfile(firstName, lastName, className, teacherName);
             }
 
         }

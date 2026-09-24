@@ -55,7 +55,7 @@ public class StudentUi {
         if (student != null) {
             System.out.println("\n🎉 Student.Student Record Found!");
             System.out.println("---------------------------------");
-            System.out.println("Full Name:  " + student.getFirst_name() + " " + student.getLast_name());
+            System.out.println("Full Name:  " + student.getFirstName() + " " + student.getLastName());
             System.out.println("Age:        " + student.getAge());
             System.out.println("Grade:      " + student.getGrade());
             System.out.println("GPA:        " + student.getGpa());
@@ -90,13 +90,13 @@ public class StudentUi {
             case 1 -> {
                 System.out.print("Enter new first name: ");
                 String newFirst_name = scan.nextLine();
-                student.setFirst_name(newFirst_name);
+                student.setFirstName(newFirst_name);
             }
 
             case 2 -> {
                 System.out.print("Enter new second name: ");
                 String newLast_name = scan.nextLine();
-                student.setLast_name(newLast_name);
+                student.setLastName(newLast_name);
             }
 
             case 3 -> {
