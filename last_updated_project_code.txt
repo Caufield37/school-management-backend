@@ -1,0 +1,1060 @@
+=== src/Database/DatabaseConfig.java ===
+package Database;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+public class DatabaseConfig {
+
+    private static final String URL = "jdbc:mysql://localhost:3306/school_one";
+    private static final String USERNAME = "root";
+    private static final String PASSWORD = System.getenv("DB_PASSWORD");
+
+    public static Connection getConnection() throws SQLException {
+        if (PASSWORD == null || PASSWORD.trim().isEmpty()) {
+            throw new IllegalStateException("Missing DB_PASSWORD environment variable!");
+        }
+        return DriverManager.getConnection(URL, USERNAME, PASSWORD);
+    }
+}
+
+
+=== src/Student/StudentDao.java ===
+package Student;
+import Database.DatabaseConfig;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+public class StudentDao {
+
+    public void insertStudent(Student student) {
+        String query = "INSERT INTO students ( first_name, last_name, gpa, age, grade, classroom_id) VALUES (?, ?, ?, ?, ?)";
+
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement pstm = conn.prepareStatement(query)) {
+
+            pstm.setString(1, student.getFirstName());
+            pstm.setString(2, student.getLastName());
+            pstm.setDouble(3, student.getGpa());
+            pstm.setInt(4, student.getAge());
+            pstm.setString(5, student.getGrade());
+            pstm.setInt(6, student.getClassroomId());
+
+            pstm.executeUpdate();
+            System.out.println("students have added to the database successfully.");
+
+        } catch (SQLException e) {
+            System.out.println("Database insert error" + e.getMessage());
+        }
+    }
+
+
+    public Student getStudentById(int studentId) {
+        String query = "SELECT * FROM students WHERE student_id = ?";
+
+        try(Connection conn = DatabaseConfig.getConnection();
+            PreparedStatement pstm = conn.prepareStatement(query)){
+
+            pstm.setInt(1, studentId);
+
+            try(ResultSet rs = pstm.executeQuery()) {
+                if(rs.next()) {
+                    String firstName = rs.getString("first_name");
+                    String lastName = rs.getString("last_name");
+                    double gpa = rs.getDouble("gpa");
+                    int age = rs.getInt("age");
+                    String grade = rs.getString("grade");
+                    Integer classroomId = rs.getInt("classroom_id");
+
+                    return new Student(firstName, lastName, gpa, age, grade, classroomId);
+                }
+
+                return null;
+            }
+
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+
+        return null;
+    }
+
+    public void updateStudentById(Student student, int studentId) {
+
+        String query = "UPDATE students SET first_name = ?, last_name = ?, gpa = ?, age = ?, grade = ? WHERE student_id = ?";
+
+        try(Connection conn = DatabaseConfig.getConnection();
+            PreparedStatement pstm = conn.prepareStatement(query)) {
+
+            pstm.setString(1, student.getFirstName());
+            pstm.setString(2, student.getLastName());
+            pstm.setDouble(3, student.getGpa());
+            pstm.setInt(4, student.getAge());
+            pstm.setString(5, student.getGrade());
+            pstm.setInt(6, studentId);
+
+            pstm.executeUpdate();
+            System.out.println("Done updating successfully...");
+
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+
+
+    }
+
+    public void deleteStudentById(int studentId) {
+        String query = "DELETE FROM students WHERE student_id = ?";
+
+        try(Connection conn = DatabaseConfig.getConnection();
+            PreparedStatement pstm = conn.prepareStatement(query)) {
+
+            pstm.setInt(1, studentId);
+            pstm.executeUpdate();
+        } catch(SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+}
+
+=== src/Student/StudentUi.java ===
+package Student;
+
+import java.util.*;
+
+
+public class StudentUi {
+
+    Scanner scan = new Scanner(System.in);
+    StudentDao studentDao = new StudentDao();
+
+    public void adding() {
+
+
+        System.out.println("Welcome to student adding application");
+
+        System.out.print("Enter the student's first name: ");
+        String first_name = scan.nextLine().trim();
+
+        System.out.print("Enter the student's last name: ");
+        String last_name = scan.nextLine().trim();
+
+        System.out.print("Enter the student's gpa: ");
+        double gpa = Double.parseDouble(scan.nextLine());
+
+        System.out.print("Enter the student's age: ");
+        int age = Integer.parseInt(scan.nextLine());
+
+        System.out.print("Enter the student's grade: ");
+        String grade = scan.nextLine().trim();
+
+        System.out.println("Enter the classroom id: ");
+        Integer classroom_id = Integer.parseInt(scan.nextLine());
+
+        Student newStudent = new Student(first_name, last_name, gpa, age, grade, classroom_id);
+
+        System.out.println("Passing student into dao layer....");
+
+        studentDao.insertStudent(newStudent);
+
+        System.out.println("Process completed...");
+    }
+
+    public void retrieving() {
+
+        System.out.println("=== STUDENT RETRIEVAL SYSTEM ===");
+        System.out.print("Enter Student.Student ID to search: ");
+        int searchId = Integer.parseInt(scan.nextLine().trim());
+
+        System.out.println("\nUI: Requesting student data from the DAO layer...");
+
+        // 1. Call the DAO layer to get the Student.Student object container
+        Student student = studentDao.getStudentById(searchId);
+
+        // 2. Check if a student container was returned
+        if (student != null) {
+            System.out.println("\n🎉 Student.Student Record Found!");
+            System.out.println("---------------------------------");
+            System.out.println("Full Name:  " + student.getFirstName() + " " + student.getLastName());
+            System.out.println("Age:        " + student.getAge());
+            System.out.println("Grade:      " + student.getGrade());
+            System.out.println("GPA:        " + student.getGpa());
+            System.out.println("---------------------------------");
+        } else {
+            System.out.println("\n❌ No student found with ID: " + searchId);
+        }
+    }
+
+    public void updating() {
+        System.out.println("Welcome to student updating application....");
+        System.out.print("Enter student's id to update: ");
+        int id = Integer.parseInt(scan.nextLine());
+
+        Student student = studentDao.getStudentById(id);
+        if(student == null) {
+            System.out.println("can't find...");
+            return;
+        }
+
+        System.out.println("What would you like to update? ");
+        System.out.println("1. updating first name");
+        System.out.println("2. updating last name");
+        System.out.println("3. updating gpa");
+        System.out.println("4. updating age");
+        System.out.println("5. updating grade");
+
+        System.out.print("Enter your choice: ");
+        int updateChoice = Integer.parseInt(scan.nextLine());
+
+        switch (updateChoice) {
+            case 1 -> {
+                System.out.print("Enter new first name: ");
+                String newFirst_name = scan.nextLine();
+                student.setFirstName(newFirst_name);
+            }
+
+            case 2 -> {
+                System.out.print("Enter new second name: ");
+                String newLast_name = scan.nextLine();
+                student.setLastName(newLast_name);
+            }
+
+            case 3 -> {
+                System.out.print("Enter new gpa: ");
+                double new_Gpa = Double.parseDouble(scan.nextLine());
+                student.setGpa(new_Gpa);
+            }
+
+            case 4 -> {
+                System.out.print("Enter new age: ");
+                int new_age = Integer.parseInt(scan.nextLine());
+                student.setAge(new_age);
+            }
+
+            case 5 -> {
+                System.out.print("Enter new grade: ");
+                String new_grade = scan.nextLine();
+                student.setGrade(new_grade);
+            }
+
+            default -> {
+                System.out.println("invalid number...");
+            }
+        }
+        studentDao.updateStudentById(student, id);
+        System.out.println("successfully updated...");
+
+    }
+
+    public void deleting() {
+        System.out.println("Welcome to student deleting application");
+        System.out.print("Enter a student id that you want to delete: ");
+        int id = Integer.parseInt(scan.nextLine());
+        studentDao.deleteStudentById(id);
+    }
+
+    public void displayingStudentUi() {
+        System.out.println("_________________________________________________");
+        System.out.println("Welcome to student management application....");
+        System.out.println("_________________________________________________");
+
+
+        boolean isRunning = true;
+        while(isRunning) {
+            System.out.println("1. Adding new students");
+            System.out.println("2. Viewing student");
+            System.out.println("3. Updating student");
+            System.out.println("4. Deleting student");
+            System.out.println("5. Exit");
+            System.out.print("Enter a number: ");
+            int choice = 0;
+            try{
+                choice = Integer.parseInt(scan.nextLine());
+            } catch(NumberFormatException e) {
+                System.out.println(e.getMessage());
+            }
+
+
+            switch (choice) {
+                case 1 -> adding();
+                case 2 -> retrieving();
+                case 3 -> updating();
+                case 4 -> deleting();
+                case 5 -> isRunning = false;
+                default -> System.out.println("Invalid choice");
+            }
+        }
+
+    }
+}
+
+
+=== src/Student/StudentAcademicProfile.java ===
+package Student;
+
+public class StudentAcademicProfile {
+    private String firstName;
+    private String lastName;
+    private String classroomName;
+    private String teacherName;
+
+    public StudentAcademicProfile(String firstName, String lastName, String classroomName, String teacherName) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.classroomName = classroomName;
+        this.teacherName = teacherName;
+    }
+
+    public String getFirstName() {return this.firstName;}
+
+    public String getLastName() {return this.lastName;}
+
+    public String getClassroomName() {return this.classroomName;}
+
+    public String getTeacherName() {return this.teacherName;}
+}
+=== src/Student/Student.java ===
+package Student;
+
+public class Student {
+    private String firstName;
+    private String lastName;
+    private double gpa;
+    private int age;
+    private String grade;
+    private Integer classroomId;
+
+    public Student(String firstName, String lastName, double gpa, int age, String grade, Integer classroomId) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.gpa = gpa;
+        this.age = age;
+        this.grade = grade;
+        this.classroomId = classroomId;
+    }
+
+    public void setFirstName(String first_name) {
+        this.firstName = firstName;
+    }
+
+    public void setLastName(String last_name) {
+        this.lastName = lastName;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    public void setGpa(double gpa) {
+        this.gpa = gpa;
+    }
+
+    public void setGrade(String grade) {
+        this.grade = grade;
+    }
+
+    public String getFirstName() {return this.firstName;}
+
+    public String getLastName() {return this.lastName;}
+
+    public double getGpa() {return this.gpa;}
+
+    public int getAge() {return this.age;}
+
+    public String getGrade() {return  this.grade;}
+
+    public int getClassroomId(){return this.classroomId;}
+
+}
+=== src/Classroom/ClassroomDao.java ===
+package Classroom;
+
+import Database.DatabaseConfig;
+import Student.StudentAcademicProfile;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+public class ClassroomDao {
+
+    public StudentAcademicProfile getStudentDetails(int studentId) {
+
+        //first of all, the query select first name and last name from the students.
+        //secondly, select class name from classrooms and teacher name from teachers
+        //then join two tables, students and classrooms, students and teachers
+        //while joining students and teachers, students is on the left and join only
+        //with the classroom which has the exact class id has student's class id.
+        //then join teachers using the classroom's teacher id we got previously and match with the teacher id.
+        String query = """
+           SELECT
+                students.first_name,
+                students.last_name,
+                classrooms.class_name,
+                teachers.name AS teacher_name
+           From students
+           LEFT JOIN classrooms ON students.classroom_id = classrooms.classroom_id
+           LEFT JOIN teachers ON classrooms.teacher_id = teachers.id
+           WHERE students.student_id = ?
+            """;
+
+
+    try(Connection conn = DatabaseConfig.getConnection();
+        PreparedStatement pstm = conn.prepareStatement(query)) {
+
+        //we have only one question mark, so studentId is assigned to it.
+        pstm.setInt(1, studentId);
+
+        // executeQuery() returns a ResultSet cursor pointing to the rows returned by the query.
+        try(ResultSet rs = pstm.executeQuery()) {
+            // Check if a row exists matching the student ID and move the cursor to it.
+            if(rs.next()) {
+                //the value under first_name column is stored in first_name variable
+                String firstName = rs.getString("first_name");
+
+                //the value under last_name column is stored in last_name variable
+                String lastName = rs.getString("last_name");
+
+                //the value under class_name column is stored in class_name variable
+                String className = rs.getString("class_name");
+
+                //the value under teacher_name column is stored in teacher_name variable
+                String teacherName = rs.getString("teacher_name");
+
+                //return all the value assigning to new object, studentAcademicProfile
+                return new StudentAcademicProfile(firstName, lastName, className, teacherName);
+            }
+
+        }
+
+    } catch(SQLException e) {
+        System.out.println(e.getMessage());
+    }
+
+    return null;
+    }
+
+
+    public boolean transferStudent(int studentId, int newClassroomId) {
+
+        //update the student's classroom id using student's id
+        String query = "UPDATE students SET classroom_id = ? WHERE student_id = ?";
+
+        try(Connection conn = DatabaseConfig.getConnection();
+        PreparedStatement pstm = conn.prepareStatement(query)) {
+
+            //in query the first question mark is for classroom_id, so newClassroomId is assigned to 1
+            pstm.setInt(1, newClassroomId);
+
+            //second question mark is for student_id, so studentId is assigned to 2
+            pstm.setInt(2, studentId);
+
+            //store the number of row affected by executeUpdate method in variable
+            int rowsAffected = pstm.executeUpdate();
+
+            //check if the rows is one or not, one is more than zero, so it would return true, else false
+            return rowsAffected > 0;
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        return false;
+    }
+
+    public void transferTeacher(int teacherId, int newClassroomId) {
+
+        //updating the teacher id by getting the exact classroom_id that the user want to change
+        String query = "UPDATE classrooms SET teacher_id = ? WHERE classroom_id = ?";
+
+        try(Connection conn = DatabaseConfig.getConnection();
+        PreparedStatement pstm = conn.prepareStatement(query)) {
+
+            //1 is assigned to teacherId
+            pstm.setInt(1, teacherId);
+
+            //2 is assigned to newClassroomId
+            pstm.setInt(2, newClassroomId);
+
+            //execute the update
+            pstm.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+
+}
+=== src/Classroom/ClassroomUi.java ===
+package Classroom;
+
+import Student.StudentAcademicProfile;
+
+import java.util.Scanner;
+
+public class ClassroomUi {
+
+    Scanner scanner = new Scanner(System.in);
+    ClassroomDao classroomDao = new ClassroomDao();
+
+    public void gettingStudentsDetails() {
+
+        System.out.println("Enter a student's id to view details: ");
+        int studentId = Integer.parseInt(scanner.nextLine().trim());
+
+        StudentAcademicProfile profile = classroomDao.getStudentDetails(studentId);
+
+        // 2. Guard against null if student doesn't exist
+        if (profile == null) {
+            System.out.println("❌ No student record found with ID: " + studentId);
+            return;
+        }
+
+        // 3. Print the joined data
+        System.out.println("\n--- Student Academic Profile ---");
+        System.out.println("Student Name:    " + profile.getFirstName() + " " + profile.getLastName());
+        System.out.println("Classroom:       " + (profile.getClassroomName() != null ? profile.getClassroomName() : "Not assigned"));
+        System.out.println("Teacher in Charge: " + (profile.getTeacherName() != null ? profile.getTeacherName() : "No teacher assigned"));
+        System.out.println("--------------------------------\n");
+    }
+
+    public void transferringStudent() {
+
+        System.out.println("Enter a student's id that you want to transfer: ");
+        int studentId = Integer.parseInt(scanner.nextLine().trim());
+
+        System.out.println("Enter new classroom id: ");
+        int classroomId = Integer.parseInt(scanner.nextLine().trim());
+
+        classroomDao.transferStudent(studentId,classroomId);
+    }
+
+    public void transferringTeacher() {
+
+        System.out.println("Enter a teacher's id that you want to transfer: ");
+        int teacherId = Integer.parseInt(scanner.nextLine().trim());
+
+        System.out.println("Enter new classroom id: ");
+        int classroomId = Integer.parseInt(scanner.nextLine().trim());
+
+        classroomDao.transferTeacher(teacherId, classroomId);
+    }
+
+    public void displayingClassroomUi() {
+
+        System.out.println("______________________________________");
+        System.out.println("Welcome to classroom section");
+        System.out.println("______________________________________");
+        System.out.println("1. Student Details");
+        System.out.println("2. Transfer student");
+        System.out.println("3. Transfer teacher");
+        System.out.println("4. Quit");
+        System.out.print("Enter a number(1, 2, 3): ");
+
+        int choice = Integer.parseInt(scanner.nextLine().trim());
+
+        switch (choice) {
+            case 1 -> gettingStudentsDetails();
+            case 2 -> transferringStudent();
+            case 3 -> transferringTeacher();
+            case 4 -> {}
+            default -> System.out.println("invalid number");
+        }
+    }
+
+
+}
+=== src/Classroom/Classroom.java ===
+package Classroom;
+
+import Student.Student;
+import Teacher.Teacher;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class Classroom {
+    private String className;
+    private int numberOfStudents;
+    private Teacher teacher;
+    private List<Student> students;
+
+    public Classroom(String className, int numberOfStudents, Teacher teacher) {
+        this.className = className;
+        this.numberOfStudents = numberOfStudents;
+        this.teacher = teacher;
+        this.students = new ArrayList<>();
+    }
+
+    public Teacher getTeacher() {return this.teacher;}
+
+    public List<Student> getStudent() {return this.students;}
+
+    public String getClassName() {return this.className;}
+
+    public int getNumberOfStudents(){return this.numberOfStudents;}
+}
+=== src/Main.java ===
+import Student.StudentUi;
+import Teacher.TeacherUi;
+import Classroom.*;
+
+import java.util.Scanner;
+
+public class Main {
+    Scanner scanner = new Scanner(System.in);
+    public static void main(String[] args) {
+
+        main_menu();
+
+
+
+    }
+
+    public static void main_menu() {
+        Scanner scanner = new Scanner(System.in);
+
+        TeacherUi teacherUi = new TeacherUi();
+        StudentUi studentUi = new StudentUi();
+        ClassroomUi classroomUi = new ClassroomUi();
+
+        System.out.println("____________________________________________");
+        System.out.println("Welcome to Student Management Application");
+        System.out.println("____________________________________________");
+
+        System.out.println("1. Student");
+        System.out.println("2. Teacher");
+        System.out.println("3. Classroom");
+        System.out.println("4. Quit");
+
+        System.out.print("Enter a number(1,2,3): ");
+        int choice = 0;
+        try{
+            choice = Integer.parseInt(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            System.out.println(e.getMessage());
+        }
+
+
+        switch (choice) {
+            case 1 -> studentUi.displayingStudentUi();
+            case 2 -> teacherUi.displayingTeacherUi();
+            case 3 -> classroomUi.displayingClassroomUi();
+            case 4 -> {}
+            default -> System.out.println("Invalid number");
+        }
+
+        scanner.close();
+    }
+}
+=== src/Teacher/TeacherUi.java ===
+package Teacher;
+
+import Student.Student;
+import Student.StudentDao;
+
+import java.util.List;
+import java.util.Scanner;
+
+public class TeacherUi {
+
+    Scanner scan = new Scanner(System.in);
+    TeacherDao teacherDao = new TeacherDao();
+
+    public void adding() {
+
+
+        System.out.println("Welcome to teacher adding application");
+
+        System.out.print("Enter the teacher's first name: ");
+        String first_name = scan.nextLine().trim();
+
+        System.out.print("Enter the teacher's last name: ");
+        String last_name = scan.nextLine().trim();
+
+        System.out.print("Enter the teacher's age: ");
+        int age = Integer.parseInt(scan.nextLine());
+
+        System.out.print("Enter the student's subject: ");
+        String subject = scan.nextLine().trim();
+
+        Teacher newTeacher = new Teacher(first_name, last_name, age, subject);
+
+        System.out.println("Passing student into dao layer....");
+
+        teacherDao.insertTeacher(newTeacher);
+
+        System.out.println("Process completed...");
+    }
+
+    public void teacherRetrieving() {
+        System.out.print("Enter an id to get information about that specific teacher: ");
+        int teacherId = Integer.parseInt(scan.nextLine());
+
+        Teacher teacher = teacherDao.getTeacherById(teacherId);
+
+        if(teacher != null) {
+            System.out.println("Teacher: " + teacher.getFirstName() + " " + teacher.getLastName());
+            System.out.println("Age: " + teacher.getAge());
+            System.out.println("Subject: " + teacher.getSubject());
+        } else{
+            System.out.println("that teacher does not exist....");
+        }
+    }
+
+    public void gettingAllTeacher() {
+        List<Teacher> teacherList = teacherDao.getAllTeachers();
+
+        for(Teacher teacher : teacherList) {
+            System.out.println(teacher.getFirstName() + " " + teacher.getLastName());
+            System.out.println("Age: " + teacher.getAge());
+            System.out.println("Subject: " + teacher.getSubject());
+        }
+    }
+
+    public void updating(){
+        System.out.print("Enter a teacher's id to update: ");
+        int id = Integer.parseInt(scan.nextLine());
+
+        Teacher teacher = teacherDao.getTeacherById(id);
+
+        if(teacher == null) {
+            System.out.println("Can't find the teacher..");
+            return;
+        }
+
+        System.out.println("What would you like to update? ");
+        System.out.println("1. Updating first name");
+        System.out.println("2. Updating last name");
+        System.out.println("3. Updating age");
+        System.out.println("4. Updating subject");
+
+        System.out.print("Enter your choice: ");
+        int choice = Integer.parseInt(scan.nextLine());
+
+        switch (choice) {
+            case 1 -> {
+                System.out.println("Enter the new first name:");
+                teacher.setFirstName(scan.nextLine());
+            }
+            case 2 -> {
+                System.out.println("Enter the new last name: ");
+                teacher.setLastName(scan.nextLine());
+            }
+            case 3 -> {
+                System.out.println("Enter the new age: ");
+                teacher.setAge(Integer.parseInt(scan.nextLine()));
+            }
+            case 4 -> {
+                System.out.println("Enter the new subject: ");
+                teacher.setSubject(scan.nextLine());
+            }
+            default -> {
+                System.out.println("invalid number");
+                break;
+            }
+        }
+        teacherDao.updateTeacherById(teacher, id);
+        System.out.println("updated successfully...");
+
+    }
+
+    public void deleting(){
+        System.out.print("Enter the teacher id that you want to delete: ");
+        int id = Integer.parseInt(scan.nextLine());
+
+        teacherDao.deleteTeacherById(id);
+    }
+
+    public void displayingTeacherUi(){
+
+        System.out.println("Teacher user interface....");
+
+
+        int choice = 0;
+
+        boolean isRunning = true;
+        while(isRunning) {
+            System.out.println("1. Adding new teacher....");
+            System.out.println("2. Search teacher using Id...");
+            System.out.println("3. Updating the information about teacher...");
+            System.out.println("4. Deleting teacher by using id...");
+            System.out.println("5. View teachers..");
+            System.out.println("6. Exit");
+            System.out.print("Enter a number (1-5): ");
+
+            try{
+                choice = Integer.parseInt(scan.nextLine());
+            } catch (NumberFormatException e) {
+                System.out.println(e.getMessage());
+            }
+
+
+
+            switch (choice) {
+                case 1 -> adding();
+                case 2 -> teacherRetrieving();
+                case 3 -> updating();
+                case 4 -> deleting();
+                case 5 -> gettingAllTeacher();
+                case 6 -> isRunning = false;
+                default -> {
+                    System.out.println("Invalid number");
+                }
+            }
+        }
+
+    }
+}
+=== src/Teacher/TeacherDao.java ===
+package Teacher;
+import Database.DatabaseConfig;
+import Student.Student;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+
+public class TeacherDao {
+
+    //inserting new teacher to the database table
+    public void insertTeacher(Teacher teacher) {
+
+        //even though in teacher object, it has first_name and last_name,
+        //here i want to combine name by concaneting two strings
+        String name = teacher.getFirstName() + " " +  teacher.getLastName();
+
+        //insert into teachers tabes,
+        //the values are name, age and subject
+        String query = "INSERT into teachers(name, age, subject) VALUES (?, ?, ?)";
+
+        try(Connection conn = DatabaseConfig.getConnection();
+            PreparedStatement pstm = conn.prepareStatement(query)) {
+
+            //In the query the first one is name, so here it is
+            pstm.setString(1, name);
+
+            //the second one is age, so here it is
+            pstm.setInt(2, teacher.getAge());
+
+            //the third one is subject, and here we go
+            pstm.setString(3, teacher.getSubject());
+
+
+            //then execute the statement using executeUpdating.
+            pstm.executeUpdate();
+
+            System.out.println("Teachers have been added successfully....");
+
+
+        } catch(SQLException e) {
+            System.out.println(e.getMessage());
+        }
+
+    }
+
+    public Teacher getTeacherById(int teacher_id) {
+
+        //the query is selecting the specific teacher from teachers table where it matches with it
+        String query = "SELECT * FROM teachers where id=?";
+
+        try(Connection conn = DatabaseConfig.getConnection();
+        PreparedStatement pstm = conn.prepareStatement(query)) {
+
+            //assign teacher_id into pstm.
+            pstm.setInt(1, teacher_id);
+
+            //executeQuery return a ResultSet cursor pointing to the rows returned by the query
+            try(ResultSet rs = pstm.executeQuery()) {
+
+                //check if a row exist matching to teacher id and move the cursor to it
+                if(rs.next()) {
+                    //the first column is name so assigned it to full_name variable
+                    String full_name = rs.getString("name");
+
+                    //the second column is age so store in age
+                    int age = rs.getInt("age");
+
+                    //then store subject column in subject variable
+                    String subject = rs.getString("subject");
+
+                    //check if the full name is not null and full name is not empty
+                    if(full_name != null && !full_name.trim().isEmpty()) {
+                        //full name needed to be split into two parts, first name and second name
+                        //so split them and store in parts list
+                        String[] parts = full_name.split(" ", 2);
+
+                        //the first element in the parts is first name, so store it
+                        String first_name = parts[0];
+
+
+                        String last_name;
+                        //only if that part array is longer than 1 mean that the user has the last name
+                        //so check using if
+                        if(parts.length > 1) {
+                            //if longer than one, store the second part as last_name
+                            last_name = parts[1];
+                        } else {
+                            //if not, last_name would be blank
+                            last_name = " ";
+                        }
+                        //return teacher as a whole object
+                        return new Teacher(first_name, last_name, age, subject);
+                    }
+
+
+                }
+                return null;
+            }
+
+        } catch(SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        return null;
+    }
+
+    //this method retrieve all the teacher from the database
+    public List<Teacher> getAllTeachers() {
+
+        //create teacherList to store all the teacher in the list
+        List<Teacher> teacherList = new ArrayList<>();
+
+        //select all the elements in teachers table
+        String query = "SELECT * FROM teachers";
+
+        try(Connection conn = DatabaseConfig.getConnection();
+        PreparedStatement pstm = conn.prepareStatement(query)) {
+
+            //store the row return by query in resultset object rs
+            ResultSet rs = pstm.executeQuery();
+
+            //as far as rs has another element, the looping continue
+            while(rs.next()) {
+
+                //store id column in id variable
+                int id = rs.getInt("id");
+
+                //store name column in full name variable
+                String full_name = rs.getString("name");
+
+                //store age
+                int age = rs.getInt("age");
+
+                //store subject
+                String subject = rs.getString("subject");
+
+                String first_name;
+                String last_name;
+
+                //if full_name is not null AND empty, assign to first_name and last_name each
+                if(full_name != null && !full_name.trim().isEmpty()) {
+                    String[] parts = full_name.split(" ", 2);
+
+                    first_name = parts[0];
+
+                    if(parts.length > 1) {
+                        last_name = parts[1];
+                    } else {
+                        last_name = "";
+                    }
+                }
+                //if not both will be blanks
+                else {
+                    first_name = "";
+                    last_name = "";
+                }
+
+                //then store then in a list by creating a teacher object
+                teacherList.add(new Teacher(first_name, last_name, age, subject));
+
+            }
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+
+        return teacherList;
+    }
+
+
+    public void updateTeacherById(Teacher teacher, int teacherId) {
+
+        String query = "UPDATE teachers SET name = ?, age = ?, subject = ? WHERE id = ?";
+
+        try(Connection conn = DatabaseConfig.getConnection();
+            PreparedStatement pstm = conn.prepareStatement(query)) {
+
+            pstm.setString(1, teacher.getFirstName() + " " + teacher.getLastName());
+            pstm.setInt(2, teacher.getAge());
+            pstm.setString(3, teacher.getSubject());
+            pstm.setInt(4, teacherId);
+
+            pstm.executeUpdate();
+            System.out.println("Done updating successfully...");
+
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public void deleteTeacherById(int teacherId) {
+        String query = "DELETE FROM teachers WHERE id = ?";
+
+        try(Connection conn = DatabaseConfig.getConnection();
+            PreparedStatement pstm = conn.prepareStatement(query)) {
+
+            pstm.setInt(1, teacherId);
+            pstm.executeUpdate();
+        } catch(SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+}
+=== src/Teacher/Teacher.java ===
+package Teacher;
+
+public class Teacher {
+
+    private String firstName;
+    private String lastName;
+    private int age;
+    private String subject;
+    private int teacherId;
+
+
+    public Teacher(String firstName, String lastName, int age, String subject) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.age = age;
+        this.subject = subject;
+    }
+
+    public void setTeacherID(int teacherID) {this.teacherId = teacherID;}
+
+    public void setFirstName(String first_name) {this.firstName = firstName;}
+
+    public void setLastName(String last_name) {this.lastName = last_name;}
+
+    public void setAge(int age) {this.age = age;}
+
+    public void setSubject(String subject) {this.subject = subject;}
+
+    public String getFirstName() {return this.firstName;}
+
+    public String getLastName() {return this.lastName;}
+
+    public int getAge() {return this.age;}
+
+    public String getSubject() {return  this.subject;}
+}
