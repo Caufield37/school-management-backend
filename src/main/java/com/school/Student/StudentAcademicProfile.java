@@ -1,4 +1,4 @@
-package Student;
+package com.school.Student;
 
 public class StudentAcademicProfile {
     private String firstName;

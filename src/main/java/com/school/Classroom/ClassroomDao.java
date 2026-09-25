@@ -1,12 +1,13 @@
-package Classroom;
+package com.school.Classroom;
 
-import Database.DatabaseConfig;
-import Student.StudentAcademicProfile;
+import com.school.Database.DatabaseConfig;
+import com.school.Student.StudentAcademicProfile;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.*;
 
 public class ClassroomDao {
 
@@ -112,6 +113,33 @@ public class ClassroomDao {
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
+    }
+
+    public List<Classroom> getAllClassroom() {
+
+        String query = "SELECT * FROM classrooms";
+
+        List<Classroom> classroomList = new ArrayList<>();
+
+        try(Connection conn = DatabaseConfig.getConnection();
+        PreparedStatement pstm = conn.prepareStatement(query)){
+
+            ResultSet rs = pstm.executeQuery();
+
+            while(rs.next()) {
+
+                int classroomId = rs.getInt("classroom_id");
+                String className = rs.getString("class_name");
+                int teacherId = rs.getInt("class_id");
+
+                classroomList.add(new Classroom(classroomId, className, teacherId));
+            }
+
+        } catch(SQLException e) {
+            System.out.println(e.getMessage());
+        }
+
+        return classroomList;
     }
 
 

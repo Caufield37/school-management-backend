@@ -1,4 +1,4 @@
-package Student;
+package com.school.Student;
 
 public class Student {
     private String firstName;
@@ -7,6 +7,8 @@ public class Student {
     private int age;
     private String grade;
     private Integer classroomId;
+
+    public Student() {}
 
     public Student(String firstName, String lastName, double gpa, int age, String grade, Integer classroomId) {
         this.firstName = firstName;
@@ -17,11 +19,11 @@ public class Student {
         this.classroomId = classroomId;
     }
 
-    public void setFirstName(String first_name) {
+    public void setFirstName(String firstName) {
         this.firstName = firstName;
     }
 
-    public void setLastName(String last_name) {
+    public void setLastName(String lastName) {
         this.lastName = lastName;
     }
 
@@ -36,6 +38,8 @@ public class Student {
     public void setGrade(String grade) {
         this.grade = grade;
     }
+
+    public void setClassroomId(Integer classroomId) {this.classroomId = classroomId;}
 
     public String getFirstName() {return this.firstName;}
 

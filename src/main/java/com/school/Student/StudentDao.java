@@ -1,14 +1,18 @@
-package Student;
-import Database.DatabaseConfig;
+package com.school.Student;
+import com.school.Database.DatabaseConfig;
+import org.springframework.stereotype.Repository;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
+@Repository
 public class StudentDao {
 
-    public void insertStudent(Student student) {
+    public boolean insertStudent(Student student) {
         String query = "INSERT INTO students ( first_name, last_name, gpa, age, grade, classroom_id) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConfig.getConnection();
@@ -21,11 +25,12 @@ public class StudentDao {
             pstm.setString(5, student.getGrade());
             pstm.setInt(6, student.getClassroomId());
 
-            pstm.executeUpdate();
-            System.out.println("students have added to the database successfully.");
+            int rowsAffectd = pstm.executeUpdate();
+            return rowsAffectd > 0;
 
         } catch (SQLException e) {
             System.out.println("Database insert error" + e.getMessage());
+            return false;
         }
     }
 
@@ -59,6 +64,37 @@ public class StudentDao {
         }
 
         return null;
+    }
+
+    public List<Student> getAllStudents() {
+
+        String query = "SELECT * FROM students";
+
+        List<Student> studentList = new ArrayList<>();
+
+        try(Connection conn = DatabaseConfig.getConnection();
+            PreparedStatement pstm = conn.prepareStatement(query)) {
+
+            ResultSet rs = pstm.executeQuery();
+
+            while(rs.next()) {
+
+                int studentId = rs.getInt("student_id");
+                String firstName = rs.getString("first_name");
+                String lastName = rs.getString("last_name");
+                double gpa = rs.getDouble("gpa");
+                int age = rs.getInt("age");
+                String grade = rs.getString("grade");
+                Integer classroomId = rs.getInt("classroom_id");
+
+                studentList.add(new Student(firstName, lastName, gpa, age, grade, classroomId));
+            }
+
+        } catch(SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        return studentList;
+
     }
 
     public void updateStudentById(Student student, int studentId) {

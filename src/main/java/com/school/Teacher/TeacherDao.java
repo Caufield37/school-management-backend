@@ -1,6 +1,6 @@
-package Teacher;
-import Database.DatabaseConfig;
-import Student.Student;
+package com.school.Teacher;
+import com.school.Database.DatabaseConfig;
+import com.school.Student.Student;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

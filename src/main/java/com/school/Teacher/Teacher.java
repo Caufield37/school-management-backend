@@ -1,4 +1,4 @@
-package Teacher;
+package com.school.Teacher;
 
 public class Teacher {
 
