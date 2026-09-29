@@ -1,6 +1,7 @@
 package com.school.Tuition_fees;
 
 
+import com.school.Classroom.Classroom;
 import com.school.Student.Student;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -27,7 +28,7 @@ public class TuitionFee {
     @JoinColumn(name = "student_id")
     private Student student;
 
-    @Column(name = "fee-month")
+    @Column(name = "fee_month")
     private String feeMonth;
 
     @Column(name = "is_paid")
