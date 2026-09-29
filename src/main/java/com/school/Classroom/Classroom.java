@@ -2,30 +2,34 @@ package com.school.Classroom;
 
 import com.school.Student.Student;
 import com.school.Teacher.Teacher;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
 
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name="classrooms")
 public class Classroom {
-    private int classroomId;
-    private String classroomName;
-    private int teacherId;
 
-    public Classroom(int classroomId, String classroomName, int teacherId) {
-        this.classroomId = classroomId;
-        this.classroomName = classroomName;
-        this.teacherId = teacherId;
-    }
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "classroom_id")
+    private Long classroomId;
 
-    public int getClassroomId(){
-        return this.classroomId;
-    }
+    @Column(name = "class_name")
+    private String classname;
 
-    public String getClassroomName() {
-        return this.classroomName;
-    }
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "teacher_id")
+    private Teacher teacher;
 
-    public int getTeacherId(){
-        return this.teacherId;
-    }
 }

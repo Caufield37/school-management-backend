@@ -1,5 +1,7 @@
-=== src/Database/DatabaseConfig.java ===
-package Database;
+==================================================
+FILE: src/main/java/com/school/Database/DatabaseConfig.java
+==================================================
+package com.school.Database;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -20,18 +22,152 @@ public class DatabaseConfig {
 }
 
 
-=== src/Student/StudentDao.java ===
-package Student;
-import Database.DatabaseConfig;
+
+
+==================================================
+FILE: src/main/java/com/school/Application.java
+==================================================
+package com.school;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+
+// Exclude DataSourceAutoConfiguration for now so Spring Boot doesn't
+// attempt to auto-wire a database connection before we tell it to.
+@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
+public class Application {
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+}
+
+==================================================
+FILE: src/main/java/com/school/Student/StudentService.java
+==================================================
+package com.school.Student;
+
+
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class StudentService {
+
+    private final StudentDao studentDao;
+
+    public StudentService(StudentDao studentDao) {
+        this.studentDao = studentDao;
+    }
+
+    public List<Student> getAllStudents(){
+        return studentDao.getAllStudents();
+    }
+
+    public Student getStudentById(int studentId){
+        return studentDao.getStudentById(studentId);
+    }
+
+    public boolean createStudent(Student student) {
+
+        if(student.getFirstName() == null || student.getFirstName().trim().isEmpty()) {
+            throw new IllegalArgumentException("first name can't be empty..");
+        }
+
+        if(student.getLastName() == null || student.getLastName().trim().isEmpty()) {
+            throw new IllegalArgumentException("last name can't be empty..");
+        }
+
+        if(student.getGpa() < 0 || student.getGpa() > 4) {
+            throw new IllegalArgumentException("GPA must be between 0.0 and 4.0");
+        }
+
+        if(student.getAge() < 0 || student.getAge() > 120) {
+            throw new IllegalArgumentException("Age must be greater than zero and it's still impossible to live for more than 120 years");
+        }
+
+        if(student.getGrade() == null || student.getGrade().trim().isEmpty()) {
+            throw new IllegalArgumentException("Grade can't be empty");
+        }
+
+        if(student.getClassroomId() <= 0 && student.getClassroomId() != null) {
+            throw new IllegalArgumentException("classroom id can't be less than zero");
+        }
+
+        return studentDao.insertStudent(student);
+    }
+
+    public boolean deleteStudent(int studentId) {
+        return studentDao.deleteStudentById(studentId);
+    }
+}
+
+
+==================================================
+FILE: src/main/java/com/school/Student/StudentController.java
+==================================================
+package com.school.Student;
+
+
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/students")
+public class StudentController {
+
+    private final StudentService studentService;
+
+    public StudentController(StudentService studentService) {
+        this.studentService = studentService;
+    }
+
+    @GetMapping("/greet/{name}")
+    public String studentByName(@PathVariable String name) {
+        return "Hello" + name;
+    }
+
+    @GetMapping
+    public List<Student> allStudents() {
+        return studentService.getAllStudents();
+    }
+
+    @PostMapping
+    public String createStudent(@RequestBody Student student) {
+        studentService.createStudent(student);
+        return "Student: " + student.getFirstName() + " is successfully added";
+    }
+
+    @DeleteMapping("/{id}")
+    public String delete(@PathVariable int id) {
+        studentService.deleteStudent(id);
+        return "Student: " + id + " is deleted successfully.";
+    }
+
+
+}
+
+
+==================================================
+FILE: src/main/java/com/school/Student/StudentDao.java
+==================================================
+package com.school.Student;
+import com.school.Database.DatabaseConfig;
+import org.springframework.stereotype.Repository;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
+@Repository
 public class StudentDao {
 
-    public void insertStudent(Student student) {
+    public boolean insertStudent(Student student) {
         String query = "INSERT INTO students ( first_name, last_name, gpa, age, grade, classroom_id) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConfig.getConnection();
@@ -44,11 +180,12 @@ public class StudentDao {
             pstm.setString(5, student.getGrade());
             pstm.setInt(6, student.getClassroomId());
 
-            pstm.executeUpdate();
-            System.out.println("students have added to the database successfully.");
+            int rowsAffectd = pstm.executeUpdate();
+            return rowsAffectd > 0;
 
         } catch (SQLException e) {
             System.out.println("Database insert error" + e.getMessage());
+            return false;
         }
     }
 
@@ -84,6 +221,37 @@ public class StudentDao {
         return null;
     }
 
+    public List<Student> getAllStudents() {
+
+        String query = "SELECT * FROM students";
+
+        List<Student> studentList = new ArrayList<>();
+
+        try(Connection conn = DatabaseConfig.getConnection();
+            PreparedStatement pstm = conn.prepareStatement(query)) {
+
+            ResultSet rs = pstm.executeQuery();
+
+            while(rs.next()) {
+
+                int studentId = rs.getInt("student_id");
+                String firstName = rs.getString("first_name");
+                String lastName = rs.getString("last_name");
+                double gpa = rs.getDouble("gpa");
+                int age = rs.getInt("age");
+                String grade = rs.getString("grade");
+                Integer classroomId = rs.getInt("classroom_id");
+
+                studentList.add(new Student(firstName, lastName, gpa, age, grade, classroomId));
+            }
+
+        } catch(SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        return studentList;
+
+    }
+
     public void updateStudentById(Student student, int studentId) {
 
         String query = "UPDATE students SET first_name = ?, last_name = ?, gpa = ?, age = ?, grade = ? WHERE student_id = ?";
@@ -109,194 +277,28 @@ public class StudentDao {
 
     }
 
-    public void deleteStudentById(int studentId) {
+    public boolean deleteStudentById(int studentId) {
         String query = "DELETE FROM students WHERE student_id = ?";
 
         try(Connection conn = DatabaseConfig.getConnection();
             PreparedStatement pstm = conn.prepareStatement(query)) {
 
             pstm.setInt(1, studentId);
-            pstm.executeUpdate();
+            int rowsAffected = pstm.executeUpdate();
+            return rowsAffected > 0;
         } catch(SQLException e) {
             System.out.println(e.getMessage());
+            return false;
         }
     }
 }
 
-=== src/Student/StudentUi.java ===
-package Student;
-
-import java.util.*;
 
 
-public class StudentUi {
-
-    Scanner scan = new Scanner(System.in);
-    StudentDao studentDao = new StudentDao();
-
-    public void adding() {
-
-
-        System.out.println("Welcome to student adding application");
-
-        System.out.print("Enter the student's first name: ");
-        String first_name = scan.nextLine().trim();
-
-        System.out.print("Enter the student's last name: ");
-        String last_name = scan.nextLine().trim();
-
-        System.out.print("Enter the student's gpa: ");
-        double gpa = Double.parseDouble(scan.nextLine());
-
-        System.out.print("Enter the student's age: ");
-        int age = Integer.parseInt(scan.nextLine());
-
-        System.out.print("Enter the student's grade: ");
-        String grade = scan.nextLine().trim();
-
-        System.out.println("Enter the classroom id: ");
-        Integer classroom_id = Integer.parseInt(scan.nextLine());
-
-        Student newStudent = new Student(first_name, last_name, gpa, age, grade, classroom_id);
-
-        System.out.println("Passing student into dao layer....");
-
-        studentDao.insertStudent(newStudent);
-
-        System.out.println("Process completed...");
-    }
-
-    public void retrieving() {
-
-        System.out.println("=== STUDENT RETRIEVAL SYSTEM ===");
-        System.out.print("Enter Student.Student ID to search: ");
-        int searchId = Integer.parseInt(scan.nextLine().trim());
-
-        System.out.println("\nUI: Requesting student data from the DAO layer...");
-
-        // 1. Call the DAO layer to get the Student.Student object container
-        Student student = studentDao.getStudentById(searchId);
-
-        // 2. Check if a student container was returned
-        if (student != null) {
-            System.out.println("\n🎉 Student.Student Record Found!");
-            System.out.println("---------------------------------");
-            System.out.println("Full Name:  " + student.getFirstName() + " " + student.getLastName());
-            System.out.println("Age:        " + student.getAge());
-            System.out.println("Grade:      " + student.getGrade());
-            System.out.println("GPA:        " + student.getGpa());
-            System.out.println("---------------------------------");
-        } else {
-            System.out.println("\n❌ No student found with ID: " + searchId);
-        }
-    }
-
-    public void updating() {
-        System.out.println("Welcome to student updating application....");
-        System.out.print("Enter student's id to update: ");
-        int id = Integer.parseInt(scan.nextLine());
-
-        Student student = studentDao.getStudentById(id);
-        if(student == null) {
-            System.out.println("can't find...");
-            return;
-        }
-
-        System.out.println("What would you like to update? ");
-        System.out.println("1. updating first name");
-        System.out.println("2. updating last name");
-        System.out.println("3. updating gpa");
-        System.out.println("4. updating age");
-        System.out.println("5. updating grade");
-
-        System.out.print("Enter your choice: ");
-        int updateChoice = Integer.parseInt(scan.nextLine());
-
-        switch (updateChoice) {
-            case 1 -> {
-                System.out.print("Enter new first name: ");
-                String newFirst_name = scan.nextLine();
-                student.setFirstName(newFirst_name);
-            }
-
-            case 2 -> {
-                System.out.print("Enter new second name: ");
-                String newLast_name = scan.nextLine();
-                student.setLastName(newLast_name);
-            }
-
-            case 3 -> {
-                System.out.print("Enter new gpa: ");
-                double new_Gpa = Double.parseDouble(scan.nextLine());
-                student.setGpa(new_Gpa);
-            }
-
-            case 4 -> {
-                System.out.print("Enter new age: ");
-                int new_age = Integer.parseInt(scan.nextLine());
-                student.setAge(new_age);
-            }
-
-            case 5 -> {
-                System.out.print("Enter new grade: ");
-                String new_grade = scan.nextLine();
-                student.setGrade(new_grade);
-            }
-
-            default -> {
-                System.out.println("invalid number...");
-            }
-        }
-        studentDao.updateStudentById(student, id);
-        System.out.println("successfully updated...");
-
-    }
-
-    public void deleting() {
-        System.out.println("Welcome to student deleting application");
-        System.out.print("Enter a student id that you want to delete: ");
-        int id = Integer.parseInt(scan.nextLine());
-        studentDao.deleteStudentById(id);
-    }
-
-    public void displayingStudentUi() {
-        System.out.println("_________________________________________________");
-        System.out.println("Welcome to student management application....");
-        System.out.println("_________________________________________________");
-
-
-        boolean isRunning = true;
-        while(isRunning) {
-            System.out.println("1. Adding new students");
-            System.out.println("2. Viewing student");
-            System.out.println("3. Updating student");
-            System.out.println("4. Deleting student");
-            System.out.println("5. Exit");
-            System.out.print("Enter a number: ");
-            int choice = 0;
-            try{
-                choice = Integer.parseInt(scan.nextLine());
-            } catch(NumberFormatException e) {
-                System.out.println(e.getMessage());
-            }
-
-
-            switch (choice) {
-                case 1 -> adding();
-                case 2 -> retrieving();
-                case 3 -> updating();
-                case 4 -> deleting();
-                case 5 -> isRunning = false;
-                default -> System.out.println("Invalid choice");
-            }
-        }
-
-    }
-}
-
-
-=== src/Student/StudentAcademicProfile.java ===
-package Student;
+==================================================
+FILE: src/main/java/com/school/Student/StudentAcademicProfile.java
+==================================================
+package com.school.Student;
 
 public class StudentAcademicProfile {
     private String firstName;
@@ -319,8 +321,12 @@ public class StudentAcademicProfile {
 
     public String getTeacherName() {return this.teacherName;}
 }
-=== src/Student/Student.java ===
-package Student;
+
+
+==================================================
+FILE: src/main/java/com/school/Student/Student.java
+==================================================
+package com.school.Student;
 
 public class Student {
     private String firstName;
@@ -329,6 +335,8 @@ public class Student {
     private int age;
     private String grade;
     private Integer classroomId;
+
+    public Student() {}
 
     public Student(String firstName, String lastName, double gpa, int age, String grade, Integer classroomId) {
         this.firstName = firstName;
@@ -339,11 +347,11 @@ public class Student {
         this.classroomId = classroomId;
     }
 
-    public void setFirstName(String first_name) {
+    public void setFirstName(String firstName) {
         this.firstName = firstName;
     }
 
-    public void setLastName(String last_name) {
+    public void setLastName(String lastName) {
         this.lastName = lastName;
     }
 
@@ -359,6 +367,8 @@ public class Student {
         this.grade = grade;
     }
 
+    public void setClassroomId(Integer classroomId) {this.classroomId = classroomId;}
+
     public String getFirstName() {return this.firstName;}
 
     public String getLastName() {return this.lastName;}
@@ -372,18 +382,73 @@ public class Student {
     public Integer getClassroomId(){return this.classroomId;}
 
 }
-=== src/Classroom/ClassroomDao.java ===
-package Classroom;
 
-import Database.DatabaseConfig;
-import Student.StudentAcademicProfile;
+
+==================================================
+FILE: src/main/java/com/school/Classroom/ClassroomService.java
+==================================================
+package com.school.Classroom;
+
+import com.school.Student.StudentAcademicProfile;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class ClassroomService {
+
+    private final ClassroomDao classroomDao;
+
+    public ClassroomService(ClassroomDao classroomDao) {
+        this.classroomDao = classroomDao;
+    }
+
+    public List<Classroom> getAllClassrooms() {
+        return classroomDao.getAllClassroom();
+    }
+
+    public StudentAcademicProfile getStudentAcademicProfile(int studentId) {
+        if(studentId <= 0) {
+            throw new IllegalArgumentException("Student Id must be greater than zero");
+        }
+        return classroomDao.getStudentDetails(studentId);
+    }
+
+    public boolean transferStudent(int studentId, int targetClassroomId) {
+        if(studentId <= 0 || targetClassroomId <= 0) {
+            throw new IllegalArgumentException("Both student Id and classroom Id must be greater than zero");
+        }
+        return classroomDao.transferStudent(studentId, targetClassroomId);
+    }
+
+    public boolean transferTeacher(int teacherId, int targetClassroomId) {
+        if(teacherId <= 0 || targetClassroomId <= 0) {
+            throw new IllegalArgumentException("Both teacher Id and classroom Id must be greater than zero");
+        }
+        return classroomDao.transferTeacher(teacherId, targetClassroomId);
+    }
+
+}
+
+
+==================================================
+FILE: src/main/java/com/school/Classroom/ClassroomDao.java
+==================================================
+package com.school.Classroom;
+
+import com.school.Database.DatabaseConfig;
+import com.school.Student.StudentAcademicProfile;
+import org.springframework.stereotype.Repository;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.*;
 
-public class ClassroomDao {
+
+@Repository
+public class ClassroomService {
 
     public StudentAcademicProfile getStudentDetails(int studentId) {
 
@@ -468,7 +533,7 @@ public class ClassroomDao {
         return false;
     }
 
-    public void transferTeacher(int teacherId, int newClassroomId) {
+    public boolean transferTeacher(int teacherId, int newClassroomId) {
 
         //updating the teacher id by getting the exact classroom_id that the user want to change
         String query = "UPDATE classrooms SET teacher_id = ? WHERE classroom_id = ?";
@@ -483,340 +548,175 @@ public class ClassroomDao {
             pstm.setInt(2, newClassroomId);
 
             //execute the update
-            pstm.executeUpdate();
+            int rowAffected = pstm.executeUpdate();
+            return rowAffected > 0;
         } catch (SQLException e) {
             System.out.println(e.getMessage());
+            return false;
         }
+    }
+
+    public List<Classroom> getAllClassroom() {
+
+        String query = "SELECT * FROM classrooms";
+
+        List<Classroom> classroomList = new ArrayList<>();
+
+        try(Connection conn = DatabaseConfig.getConnection();
+        PreparedStatement pstm = conn.prepareStatement(query)){
+
+            ResultSet rs = pstm.executeQuery();
+
+            while(rs.next()) {
+
+                int classroomId = rs.getInt("classroom_id");
+                String className = rs.getString("class_name");
+                int teacherId = rs.getInt("teacher_id");
+
+                classroomList.add(new Classroom(classroomId, className, teacherId));
+            }
+
+        } catch(SQLException e) {
+            System.out.println(e.getMessage());
+        }
+
+        return classroomList;
     }
 
 
 }
-=== src/Classroom/ClassroomUi.java ===
-package Classroom;
 
-import Student.StudentAcademicProfile;
 
-import java.util.Scanner;
+==================================================
+FILE: src/main/java/com/school/Classroom/ClassroomController.java
+==================================================
+package com.school.Classroom;
 
-public class ClassroomUi {
 
-    Scanner scanner = new Scanner(System.in);
-    ClassroomDao classroomDao = new ClassroomDao();
+import org.springframework.web.bind.annotation.*;
 
-    public void gettingStudentsDetails() {
+import java.util.List;
 
-        System.out.println("Enter a student's id to view details: ");
-        int studentId = Integer.parseInt(scanner.nextLine().trim());
+@RestController
+@RequestMapping("/api/classrooms")
+public class ClassroomController {
 
-        StudentAcademicProfile profile = classroomDao.getStudentDetails(studentId);
+    private final ClassroomService classroomService;
 
-        // 2. Guard against null if student doesn't exist
-        if (profile == null) {
-            System.out.println("❌ No student record found with ID: " + studentId);
-            return;
-        }
-
-        // 3. Print the joined data
-        System.out.println("\n--- Student Academic Profile ---");
-        System.out.println("Student Name:    " + profile.getFirstName() + " " + profile.getLastName());
-        System.out.println("Classroom:       " + (profile.getClassroomName() != null ? profile.getClassroomName() : "Not assigned"));
-        System.out.println("Teacher in Charge: " + (profile.getTeacherName() != null ? profile.getTeacherName() : "No teacher assigned"));
-        System.out.println("--------------------------------\n");
+    public ClassroomController(ClassroomService classroomService) {
+        this.classroomService = classroomService;
     }
 
-    public void transferringStudent() {
-
-        System.out.println("Enter a student's id that you want to transfer: ");
-        int studentId = Integer.parseInt(scanner.nextLine().trim());
-
-        System.out.println("Enter new classroom id: ");
-        int classroomId = Integer.parseInt(scanner.nextLine().trim());
-
-        classroomDao.transferStudent(studentId,classroomId);
+    @GetMapping("/{name}")
+    public String classroomByName(@PathVariable String name){
+        return "Welcome " + name;
     }
 
-    public void transferringTeacher() {
-
-        System.out.println("Enter a teacher's id that you want to transfer: ");
-        int teacherId = Integer.parseInt(scanner.nextLine().trim());
-
-        System.out.println("Enter new classroom id: ");
-        int classroomId = Integer.parseInt(scanner.nextLine().trim());
-
-        classroomDao.transferTeacher(teacherId, classroomId);
+    @GetMapping
+    public List<Classroom> getAllClassrooms() {
+        return classroomService.getAllClassroom();
     }
-
-    public void displayingClassroomUi() {
-
-        System.out.println("______________________________________");
-        System.out.println("Welcome to classroom section");
-        System.out.println("______________________________________");
-        System.out.println("1. Student Details");
-        System.out.println("2. Transfer student");
-        System.out.println("3. Transfer teacher");
-        System.out.println("4. Quit");
-        System.out.print("Enter a number(1, 2, 3): ");
-
-        int choice = Integer.parseInt(scanner.nextLine().trim());
-
-        switch (choice) {
-            case 1 -> gettingStudentsDetails();
-            case 2 -> transferringStudent();
-            case 3 -> transferringTeacher();
-            case 4 -> {}
-            default -> System.out.println("invalid number");
-        }
-    }
-
 
 }
-=== src/Classroom/Classroom.java ===
-package Classroom;
 
-import Student.Student;
-import Teacher.Teacher;
+
+==================================================
+FILE: src/main/java/com/school/Classroom/Classroom.java
+==================================================
+package com.school.Classroom;
+
+import com.school.Student.Student;
+import com.school.Teacher.Teacher;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Classroom {
-    private String className;
-    private int numberOfStudents;
-    private Teacher teacher;
-    private List<Student> students;
+    private int classroomId;
+    private String classroomName;
+    private int teacherId;
 
-    public Classroom(String className, int numberOfStudents, Teacher teacher) {
-        this.className = className;
-        this.numberOfStudents = numberOfStudents;
-        this.teacher = teacher;
-        this.students = new ArrayList<>();
+    public Classroom(int classroomId, String classroomName, int teacherId) {
+        this.classroomId = classroomId;
+        this.classroomName = classroomName;
+        this.teacherId = teacherId;
     }
 
-    public Teacher getTeacher() {return this.teacher;}
-
-    public List<Student> getStudent() {return this.students;}
-
-    public String getClassName() {return this.className;}
-
-    public int getNumberOfStudents(){return this.numberOfStudents;}
-}
-=== src/Main.java ===
-import Student.StudentUi;
-import Teacher.TeacherUi;
-import Classroom.*;
-
-import java.util.Scanner;
-
-public class Main {
-    Scanner scanner = new Scanner(System.in);
-    public static void main(String[] args) {
-
-        main_menu();
-
-
-
+    public int getClassroomId(){
+        return this.classroomId;
     }
 
-    public static void main_menu() {
-        Scanner scanner = new Scanner(System.in);
-        TeacherUi teacherUi = new TeacherUi();
-        StudentUi studentUi = new StudentUi();
-        ClassroomUi classroomUi = new ClassroomUi();
+    public String getClassroomName() {
+        return this.classroomName;
+    }
 
-        boolean isRunning = true;
-        while (isRunning) {
-            System.out.println("\n____________________________________________");
-            System.out.println("Welcome to Student Management Application");
-            System.out.println("____________________________________________");
-            System.out.println("1. Student");
-            System.out.println("2. Teacher");
-            System.out.println("3. Classroom");
-            System.out.println("4. Quit");
-            System.out.print("Enter a number (1-4): ");
-
-            int choice = 0;
-            try {
-                choice = Integer.parseInt(scanner.nextLine().trim());
-            } catch (NumberFormatException e) {
-                System.out.println("Please enter a valid number.");
-                continue;
-            }
-
-            switch (choice) {
-                case 1 -> studentUi.displayingStudentUi();
-                case 2 -> teacherUi.displayingTeacherUi();
-                case 3 -> classroomUi.displayingClassroomUi();
-                case 4 -> isRunning = false;
-                default -> System.out.println("Invalid number");
-            }
-        }
-
-        scanner.close();
+    public int getTeacherId(){
+        return this.teacherId;
     }
 }
-=== src/Teacher/TeacherUi.java ===
-package Teacher;
 
-import Student.Student;
-import Student.StudentDao;
+
+==================================================
+FILE: src/main/java/com/school/Teacher/TeacherService.java
+==================================================
+package com.school.Teacher;
+
+
+import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Scanner;
 
-public class TeacherUi {
+@Service
+public class TeacherService {
 
-    Scanner scan = new Scanner(System.in);
-    TeacherDao teacherDao = new TeacherDao();
+    private final TeacherDao teacherDao;
 
-    public void adding() {
-
-
-        System.out.println("Welcome to teacher adding application");
-
-        System.out.print("Enter the teacher's first name: ");
-        String first_name = scan.nextLine().trim();
-
-        System.out.print("Enter the teacher's last name: ");
-        String last_name = scan.nextLine().trim();
-
-        System.out.print("Enter the teacher's age: ");
-        int age = Integer.parseInt(scan.nextLine());
-
-        System.out.print("Enter the student's subject: ");
-        String subject = scan.nextLine().trim();
-
-        Teacher newTeacher = new Teacher(first_name, last_name, age, subject);
-
-        System.out.println("Passing student into dao layer....");
-
-        teacherDao.insertTeacher(newTeacher);
-
-        System.out.println("Process completed...");
+    public TeacherService(TeacherDao teacherDao) {
+        this.teacherDao = teacherDao;
     }
 
-    public void teacherRetrieving() {
-        System.out.print("Enter an id to get information about that specific teacher: ");
-        int teacherId = Integer.parseInt(scan.nextLine());
-
-        Teacher teacher = teacherDao.getTeacherById(teacherId);
-
-        if(teacher != null) {
-            System.out.println("Teacher: " + teacher.getFirstName() + " " + teacher.getLastName());
-            System.out.println("Age: " + teacher.getAge());
-            System.out.println("Subject: " + teacher.getSubject());
-        } else{
-            System.out.println("that teacher does not exist....");
-        }
+    public List<Teacher> getAllTeachers() {
+        return teacherDao.getAllTeachers();
     }
 
-    public void gettingAllTeacher() {
-        List<Teacher> teacherList = teacherDao.getAllTeachers();
-
-        for(Teacher teacher : teacherList) {
-            System.out.println(teacher.getFirstName() + " " + teacher.getLastName());
-            System.out.println("Age: " + teacher.getAge());
-            System.out.println("Subject: " + teacher.getSubject());
-        }
+    public Teacher getTeacherById(int teacherId) {
+        return teacherDao.getTeacherById(teacherId);
     }
 
-    public void updating(){
-        System.out.print("Enter a teacher's id to update: ");
-        int id = Integer.parseInt(scan.nextLine());
+    public boolean createTeacher(Teacher teacher) {
 
-        Teacher teacher = teacherDao.getTeacherById(id);
-
-        if(teacher == null) {
-            System.out.println("Can't find the teacher..");
-            return;
+        if(teacher.getFirstName() == null || teacher.getFirstName().trim().isEmpty()) {
+            throw new IllegalArgumentException("First name can't be empty");
         }
 
-        System.out.println("What would you like to update? ");
-        System.out.println("1. Updating first name");
-        System.out.println("2. Updating last name");
-        System.out.println("3. Updating age");
-        System.out.println("4. Updating subject");
-
-        System.out.print("Enter your choice: ");
-        int choice = Integer.parseInt(scan.nextLine());
-
-        switch (choice) {
-            case 1 -> {
-                System.out.println("Enter the new first name:");
-                teacher.setFirstName(scan.nextLine());
-            }
-            case 2 -> {
-                System.out.println("Enter the new last name: ");
-                teacher.setLastName(scan.nextLine());
-            }
-            case 3 -> {
-                System.out.println("Enter the new age: ");
-                teacher.setAge(Integer.parseInt(scan.nextLine()));
-            }
-            case 4 -> {
-                System.out.println("Enter the new subject: ");
-                teacher.setSubject(scan.nextLine());
-            }
-            default -> {
-                System.out.println("invalid number");
-                break;
-            }
+        if(teacher.getLastName() == null || teacher.getLastName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Last name can't be empty");
         }
-        teacherDao.updateTeacherById(teacher, id);
-        System.out.println("updated successfully...");
 
+        if(teacher.getAge() < 18 || teacher.getAge() > 65 ) {
+            throw new IllegalArgumentException("age must be between 18 to 65");
+        }
+
+        if(teacher.getSubject() == null || teacher.getSubject().trim().isEmpty()) {
+            throw new IllegalArgumentException("subject can't be empty");
+        }
+
+        return teacherDao.insertTeacher(teacher);
     }
 
-    public void deleting(){
-        System.out.print("Enter the teacher id that you want to delete: ");
-        int id = Integer.parseInt(scan.nextLine());
-
-        teacherDao.deleteTeacherById(id);
-    }
-
-    public void displayingTeacherUi(){
-
-        System.out.println("Teacher user interface....");
-
-
-        int choice = 0;
-
-        boolean isRunning = true;
-        while(isRunning) {
-            System.out.println("1. Adding new teacher....");
-            System.out.println("2. Search teacher using Id...");
-            System.out.println("3. Updating the information about teacher...");
-            System.out.println("4. Deleting teacher by using id...");
-            System.out.println("5. View teachers..");
-            System.out.println("6. Exit");
-            System.out.print("Enter a number (1-5): ");
-
-            try{
-                choice = Integer.parseInt(scan.nextLine());
-            } catch (NumberFormatException e) {
-                System.out.println(e.getMessage());
-            }
-
-
-
-            switch (choice) {
-                case 1 -> adding();
-                case 2 -> teacherRetrieving();
-                case 3 -> updating();
-                case 4 -> deleting();
-                case 5 -> gettingAllTeacher();
-                case 6 -> isRunning = false;
-                default -> {
-                    System.out.println("Invalid number");
-                }
-            }
-        }
-
+    public boolean deleteTeacher(int teacherId) {
+        return teacherDao.deleteTeacherById(teacherId);
     }
 }
-=== src/Teacher/TeacherDao.java ===
-package Teacher;
-import Database.DatabaseConfig;
-import Student.Student;
+
+
+==================================================
+FILE: src/main/java/com/school/Teacher/TeacherDao.java
+==================================================
+package com.school.Teacher;
+import com.school.Database.DatabaseConfig;
+import com.school.Student.Student;
+import org.springframework.stereotype.Repository;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -826,10 +726,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+@Repository
 public class TeacherDao {
 
     //inserting new teacher to the database table
-    public void insertTeacher(Teacher teacher) {
+    public boolean insertTeacher(Teacher teacher) {
 
         //even though in teacher object, it has first_name and last_name,
         //here i want to combine name by concaneting two strings
@@ -853,13 +754,13 @@ public class TeacherDao {
 
 
             //then execute the statement using executeUpdating.
-            pstm.executeUpdate();
-
-            System.out.println("Teachers have been added successfully....");
+            int rowsAffected = pstm.executeUpdate();
+            return rowsAffected > 0;
 
 
         } catch(SQLException e) {
             System.out.println(e.getMessage());
+            return false;
         }
 
     }
@@ -1009,21 +910,27 @@ public class TeacherDao {
         }
     }
 
-    public void deleteTeacherById(int teacherId) {
+    public boolean deleteTeacherById(int teacherId) {
         String query = "DELETE FROM teachers WHERE id = ?";
 
         try(Connection conn = DatabaseConfig.getConnection();
             PreparedStatement pstm = conn.prepareStatement(query)) {
 
             pstm.setInt(1, teacherId);
-            pstm.executeUpdate();
+            int rowsAffected = pstm.executeUpdate();
+            return rowsAffected > 0;
         } catch(SQLException e) {
             System.out.println(e.getMessage());
+            return false;
         }
     }
 }
-=== src/Teacher/Teacher.java ===
-package Teacher;
+
+
+==================================================
+FILE: src/main/java/com/school/Teacher/Teacher.java
+==================================================
+package com.school.Teacher;
 
 public class Teacher {
 
@@ -1033,6 +940,8 @@ public class Teacher {
     private String subject;
     private int teacherId;
 
+
+    public Teacher(){};
 
     public Teacher(String firstName, String lastName, int age, String subject) {
         this.firstName = firstName;
@@ -1059,3 +968,51 @@ public class Teacher {
 
     public String getSubject() {return  this.subject;}
 }
+
+
+==================================================
+FILE: src/main/java/com/school/Teacher/TeacherController.java
+==================================================
+package com.school.Teacher;
+
+
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/teachers")
+public class TeacherController {
+
+    private final TeacherService teacherService;
+
+    public TeacherController(TeacherService teacherService) {
+        this.teacherService = teacherService;
+    }
+
+    @GetMapping
+    public List<Teacher> getAllTeachers() {
+        return teacherService.getAllTeachers();
+    }
+
+    @GetMapping("/{id}")
+    public Teacher getSpecificTeacher(@PathVariable int id) {
+        return teacherService.getTeacherById(id);
+    }
+
+    @PostMapping
+    public String createTeacher(@RequestBody Teacher teacher) {
+        teacherService.createTeacher(teacher);
+        return "Teacher: " + teacher.getFirstName() + " is successfully added";
+    }
+
+    @DeleteMapping("/{id}")
+    public String deleteTeacher(@PathVariable int id) {
+        teacherService.deleteTeacher(id);
+        return "Teacher: " + id + " is deleted successfully";
+    }
+
+
+}
+
+

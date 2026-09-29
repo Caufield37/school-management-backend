@@ -1,36 +1,45 @@
 package com.school.Teacher;
 
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name="teachers")
 public class Teacher {
 
-    private String firstName;
-    private String lastName;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name="teacher_id")
+    private Long teacherId;
+
+    @Column(name="name", nullable = false)
+    private String name;
+
+    @Column(name = "age")
     private int age;
+
+    @Column(name = "subject")
     private String subject;
-    private int teacherId;
 
-
-    public Teacher(String firstName, String lastName, int age, String subject) {
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.age = age;
-        this.subject = subject;
+    @Transient
+    public String getFirstName(){
+        if(name == null || name.trim().isEmpty()) return "";
+        return name.split(" ", 2)[0];
     }
 
-    public void setTeacherID(int teacherID) {this.teacherId = teacherID;}
+    @Transient
+    public String getLastName(){
+        if(name == null || name.trim().isEmpty()) return "";
+        String[] parts = name.split(" ", 2);
+        return parts.length > 1 ? parts[1] : "";
+    }
 
-    public void setFirstName(String first_name) {this.firstName = firstName;}
-
-    public void setLastName(String last_name) {this.lastName = last_name;}
-
-    public void setAge(int age) {this.age = age;}
-
-    public void setSubject(String subject) {this.subject = subject;}
-
-    public String getFirstName() {return this.firstName;}
-
-    public String getLastName() {return this.lastName;}
-
-    public int getAge() {return this.age;}
-
-    public String getSubject() {return  this.subject;}
 }

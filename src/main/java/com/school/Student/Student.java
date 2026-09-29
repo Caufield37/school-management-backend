@@ -1,56 +1,44 @@
 package com.school.Student;
 
+
+import com.school.Classroom.Classroom;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name="students")
 public class Student {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "student_id")
+    private Integer id;
+
+    @Column(name = "first_name", nullable = false)
     private String firstName;
+
+    @Column(name = "last_name", nullable = false)
     private String lastName;
+
+    @Column(name = "gpa")
     private double gpa;
+
+    @Column(name = "age")
     private int age;
+
+    @Column(name = "grade")
     private String grade;
-    private Integer classroomId;
 
-    public Student() {}
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "classroom_id")
+    private Classroom classroom;
 
-    public Student(String firstName, String lastName, double gpa, int age, String grade, Integer classroomId) {
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.gpa = gpa;
-        this.age = age;
-        this.grade = grade;
-        this.classroomId = classroomId;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public void setAge(int age) {
-        this.age = age;
-    }
-
-    public void setGpa(double gpa) {
-        this.gpa = gpa;
-    }
-
-    public void setGrade(String grade) {
-        this.grade = grade;
-    }
-
-    public void setClassroomId(Integer classroomId) {this.classroomId = classroomId;}
-
-    public String getFirstName() {return this.firstName;}
-
-    public String getLastName() {return this.lastName;}
-
-    public double getGpa() {return this.gpa;}
-
-    public int getAge() {return this.age;}
-
-    public String getGrade() {return  this.grade;}
-
-    public Integer getClassroomId(){return this.classroomId;}
 
 }

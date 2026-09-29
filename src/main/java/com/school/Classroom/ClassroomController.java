@@ -1,21 +1,18 @@
 package com.school.Classroom;
 
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("api/classrooms")
+@RequestMapping("/api/classrooms")
 public class ClassroomController {
 
-    private final ClassroomDao classroomDao;
+    private final ClassroomService classroomService;
 
-    public ClassroomController(ClassroomDao classroomDao) {
-        this.classroomDao = classroomDao;
+    public ClassroomController(ClassroomService classroomService) {
+        this.classroomService = classroomService;
     }
 
     @GetMapping("/{name}")
@@ -25,6 +22,7 @@ public class ClassroomController {
 
     @GetMapping
     public List<Classroom> getAllClassrooms() {
-        return classroomDao.getAllClassroom();
+        return classroomService.getAllClassrooms();
     }
+
 }

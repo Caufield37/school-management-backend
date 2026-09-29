@@ -2,39 +2,38 @@ package com.school.Student;
 
 
 import org.springframework.web.bind.annotation.*;
-import com.school.Student.StudentDao;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("api/students")
+@RequestMapping("/api/students")
 public class StudentController {
 
-    private final StudentDao studentDao;
+    private final StudentService studentService;
 
-    public StudentController(StudentDao studentDao) {
-        this.studentDao = studentDao;
+    public StudentController(StudentService studentService) {
+        this.studentService = studentService;
     }
 
-    @GetMapping("/{name}")
+    @GetMapping("/greet/{name}")
     public String studentByName(@PathVariable String name) {
         return "Hello" + name;
     }
 
     @GetMapping
     public List<Student> allStudents() {
-        return studentDao.getAllStudents();
+        return studentService.getAllStudents();
     }
 
     @PostMapping
     public String createStudent(@RequestBody Student student) {
-        studentDao.insertStudent(student);
+        studentService.createStudent(student);
         return "Student: " + student.getFirstName() + " is successfully added";
     }
 
     @DeleteMapping("/{id}")
-    public String delete(@PathVariable int id) {
-        studentDao.deleteStudentById(id);
+    public String delete(@PathVariable Long id) {
+        studentService.deleteStudent(id);
         return "Student: " + id + " is deleted successfully.";
     }
 

@@ -1,25 +1,31 @@
 package com.school.Student;
 
 
+import com.school.Classroom.Classroom;
+import com.school.Classroom.ClassroomRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 public class StudentService {
 
-    private final StudentDao studentDao;
+    private final StudentRepository studentRepository;
+    private final ClassroomRepository classroomRepository;
 
-    public StudentService(StudentDao studentDao) {
-        this.studentDao = studentDao;
+    public StudentService(StudentRepository studentRepository, ClassroomRepository classroomRepository) {
+
+        this.studentRepository = studentRepository;
+        this.classroomRepository = classroomRepository;
     }
 
     public List<Student> getAllStudents(){
-        return studentDao.getAllStudents();
+        return studentRepository.findAll();
     }
 
-    public Student getStudentById(int studentId){
-        return studentDao.getStudentById(studentId);
+    public Student getStudentById(Long studentId){
+        return studentRepository.findById(studentId).orElse(null);
     }
 
     public boolean createStudent(Student student) {
@@ -44,10 +50,31 @@ public class StudentService {
             throw new IllegalArgumentException("Grade can't be empty");
         }
 
-        if(student.getClassroomId() > 0) {
-            throw new IllegalArgumentException("classroom id can't be less than zero");
-        }
+        studentRepository.save(student);
+        return true;
+    }
 
-        return studentDao.insertStudent(student);
+    @Transactional
+    public Student transferStudent(Long studentId, Long targetClassroomId) {
+
+        Student student = studentRepository.findById(studentId).
+                orElseThrow(() -> new IllegalArgumentException("Can not be found student with id: " + studentId) );
+
+        Classroom targetClassroom = classroomRepository.findById(studentId).
+                orElseThrow(() -> new IllegalArgumentException("Can not be found student with id: " + studentId) );
+
+        student.setClassroom(targetClassroom);
+
+        return studentRepository.save(student);
+
+    }
+
+    public boolean deleteStudent(Long studentId) {
+        if(studentRepository.existsById(studentId)) {
+            studentRepository.deleteById(studentId);
+            return true;
+        }
+        return false;
+
     }
 }
