@@ -12,4 +12,6 @@ public interface TuitionFeeRepository extends JpaRepository <TuitionFee, Long> {
 
     List<TuitionFee> findByStudentId(Long studentId);
 
+    boolean existsByStudentIdAndFeeMonthAndIsPaidTrue(Long studentId, int feeMonth);
+
 }

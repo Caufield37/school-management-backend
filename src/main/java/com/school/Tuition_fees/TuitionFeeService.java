@@ -4,7 +4,10 @@ package com.school.Tuition_fees;
 import com.school.Classroom.Classroom;
 import com.school.Student.Student;
 import com.school.Student.StudentRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -28,8 +31,15 @@ public class TuitionFeeService {
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("student does not exist..."));
 
-        TuitionFee fee = new TuitionFee();
 
+
+        boolean alreadyPaid = tuitionFeeRepository.existsByStudentIdAndFeeMonthAndIsPaidTrue(studentId, month);
+
+        if (alreadyPaid) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Tuition fee for month " + month + " is already paid.");
+        }
+
+        TuitionFee fee = new TuitionFee();
         fee.setStudent(student);
         fee.setFeeMonth(month);
         fee.setPaid(true);
@@ -38,6 +48,7 @@ public class TuitionFeeService {
         return tuitionFeeRepository.save(fee);
     }
 
+    @Transactional
     public List<PaymentReport> reportPayment(Long classId, int feeMonth) {
 
         List<Student> students = studentRepository.findByClassroomId(classId);
