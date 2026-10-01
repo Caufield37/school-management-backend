@@ -46,9 +46,6 @@ public class StudentService {
             throw new IllegalArgumentException("Age must be greater than zero and it's still impossible to live for more than 120 years");
         }
 
-        if(student.getGrade() == null || student.getGrade().trim().isEmpty()) {
-            throw new IllegalArgumentException("Grade can't be empty");
-        }
 
         studentRepository.save(student);
         return true;
@@ -76,5 +73,10 @@ public class StudentService {
         }
         return false;
 
+    }
+
+    @Transactional
+    public List<Student> getAllStudentsByClassId(Long classId) {
+        return studentRepository.findByClassroomId(classId);
     }
 }

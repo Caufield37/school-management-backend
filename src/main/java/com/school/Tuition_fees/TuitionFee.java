@@ -29,7 +29,7 @@ public class TuitionFee {
     private Student student;
 
     @Column(name = "fee_month")
-    private String feeMonth;
+    private int feeMonth;
 
     @Column(name = "is_paid")
     private boolean isPaid;

@@ -1,6 +1,7 @@
 package com.school.Tuition_fees;
 
 
+import com.school.Classroom.Classroom;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,7 +17,7 @@ public class PaymentReport {
 
     private Long studentId;
     private String studentName;
-    private String classroom;
+    private String classroomName;
     private int month;
     private boolean status;
     private LocalDateTime paidAt;

@@ -13,6 +13,6 @@ import lombok.Setter;
 public class PaymentRequest {
 
     private Long studentId;
-    private String month;
+    private int month;
 
 }

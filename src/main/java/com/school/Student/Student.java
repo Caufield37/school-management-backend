@@ -19,7 +19,7 @@ public class Student {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "student_id")
-    private Integer id;
+    private Long id;
 
     @Column(name = "first_name", nullable = false)
     private String firstName;
@@ -32,9 +32,6 @@ public class Student {
 
     @Column(name = "age")
     private int age;
-
-    @Column(name = "grade")
-    private String grade;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "classroom_id")

@@ -23,7 +23,7 @@ public class Classroom {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "classroom_id")
-    private Long classroomId;
+    private Long id;
 
     @Column(name = "class_name")
     private String classname;

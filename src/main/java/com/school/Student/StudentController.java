@@ -1,6 +1,7 @@
 package com.school.Student;
 
 
+import lombok.Getter;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
